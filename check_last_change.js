@@ -127,6 +127,26 @@ function pickGitlabTimestamp(project) {
   );
 }
 
+function formatNzDate(value) {
+  if (!value) {
+    return "n/a";
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "n/a";
+  }
+  return new Intl.DateTimeFormat("en-NZ", {
+    timeZone: "Pacific/Auckland",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).format(date);
+}
+
 function compareLastChanges(githubRecords, gitlabRecords) {
   const gitlabByName = {};
   for (const record of gitlabRecords) {
@@ -257,12 +277,8 @@ async function main() {
   if (counters.gitlabNewer > 0) {
     console.log("\nRepos where GitLab looks newer:");
     for (const entry of results.filter((item) => item.status === "gitlab_newer")) {
-      const ghDate = entry.githubPushedAt
-        ? new Date(entry.githubPushedAt).toLocaleString()
-        : "n/a";
-      const glDate = entry.gitlabUpdatedAt
-        ? new Date(entry.gitlabUpdatedAt).toLocaleString()
-        : "n/a";
+      const ghDate = formatNzDate(entry.githubPushedAt);
+      const glDate = formatNzDate(entry.gitlabUpdatedAt);
       console.log(`- ${entry.name}: GitHub pushed_at=${ghDate}, GitLab last_repository_updated_at=${glDate}`);
     }
   } else {
