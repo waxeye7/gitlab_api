@@ -257,9 +257,13 @@ async function main() {
   if (counters.gitlabNewer > 0) {
     console.log("\nRepos where GitLab looks newer:");
     for (const entry of results.filter((item) => item.status === "gitlab_newer")) {
-      console.log(
-        `- ${entry.name}: GitHub pushed_at=${entry.githubPushedAt || "n/a"}, GitLab last_repository_updated_at=${entry.gitlabUpdatedAt || "n/a"}`,
-      );
+      const ghDate = entry.githubPushedAt
+        ? new Date(entry.githubPushedAt).toLocaleString()
+        : "n/a";
+      const glDate = entry.gitlabUpdatedAt
+        ? new Date(entry.gitlabUpdatedAt).toLocaleString()
+        : "n/a";
+      console.log(`- ${entry.name}: GitHub pushed_at=${ghDate}, GitLab last_repository_updated_at=${glDate}`);
     }
   } else {
     console.log("\nAll matching repos are up-to-date on GitHub or have equal timestamps.");
