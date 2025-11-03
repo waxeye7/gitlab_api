@@ -158,6 +158,35 @@ async function fetchProjects(apiBase, token, groupId) {
   return records;
 }
 
+async function fetchProjectDetail(apiBase, token, projectId) {
+  const url = `${apiBase}/projects/${projectId}`;
+  const { body } = await gitlabGet(url, { "PRIVATE-TOKEN": token });
+  try {
+    return JSON.parse(body);
+  } catch (error) {
+    throw new Error("Failed to parse GitLab project detail response as JSON.");
+  }
+}
+
+async function enrichProjects(apiBase, token, projects) {
+  for (const project of projects) {
+    if (project.last_repository_updated_at) {
+      continue;
+    }
+    try {
+      const detail = await fetchProjectDetail(apiBase, token, project.id);
+      project.last_repository_updated_at = detail.last_repository_updated_at;
+      if (!project.last_activity_at) {
+        project.last_activity_at = detail.last_activity_at;
+      }
+    } catch (error) {
+      console.error(
+        `Warning: failed to load extra details for project ${project.id}: ${error.message}`,
+      );
+    }
+  }
+}
+
 async function main() {
   loadEnv();
 
@@ -186,6 +215,8 @@ async function main() {
 
   const groupId = group.id;
   const projects = await fetchProjects(apiBase, token, groupId);
+  console.log("Fetching GitLab project details to capture repository timestamps ...");
+  await enrichProjects(apiBase, token, projects);
 
   const rows = projects.map((p) => ({
     name: p.name,
@@ -195,6 +226,7 @@ async function main() {
     web_url: p.web_url,
     empty_repo: p.empty_repo,
     visibility: p.visibility,
+    last_repository_updated_at: p.last_repository_updated_at,
   }));
 
   writeCsv(
@@ -207,6 +239,7 @@ async function main() {
       "web_url",
       "empty_repo",
       "visibility",
+      "last_repository_updated_at",
     ],
     rows,
   );

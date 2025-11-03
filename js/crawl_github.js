@@ -81,7 +81,7 @@ async function fetchGitHubRepos(org, limit) {
     "list",
     org,
     "--json",
-    "name,nameWithOwner,isArchived,visibility,url",
+    "name,nameWithOwner,isArchived,visibility,url,pushedAt",
     "--limit",
     String(limit),
   ]);
@@ -112,9 +112,14 @@ async function main() {
     archived: repo.isArchived,
     visibility: repo.visibility,
     url: repo.url,
+    pushed_at: repo.pushedAt,
   }));
 
-  writeCsv(reportPath, ["name", "name_with_owner", "archived", "visibility", "url"], rows);
+  writeCsv(
+    reportPath,
+    ["name", "name_with_owner", "archived", "visibility", "url", "pushed_at"],
+    rows,
+  );
   console.log(`Wrote GitHub report to ${reportPath}`);
 }
 
